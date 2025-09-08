@@ -737,7 +737,8 @@ ln = np.hstack(sampler.results.logl)
 if nest_weighted == True:
     weighted = np.exp(sampler.results.logwt - sampler.results.logz[-1])
     samples  =  dill.copy(dynesty.utils.resample_equal(sampler.results.samples, weighted))   
-
+else:
+    samples  =  dill.copy(sampler.results.samples)   
 
 
 # print("--- %s seconds ---" % (time.time() - start_time))  
