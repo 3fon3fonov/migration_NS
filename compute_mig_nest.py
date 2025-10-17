@@ -13,15 +13,14 @@ from pylab import *
 from subprocess import PIPE, Popen
 #import scipy.optimize as op
 #import emcee
-#import signal
+
 import corner_ES as corner
-#import dynesty
+
 import dill
 dill.settings['fmode']
 
-#import gc
+ 
 import dynesty_2_0 as dynesty
-#import dynesty
 import dynesty_patch
 dynesty.results =  dynesty_patch 
 
@@ -40,7 +39,6 @@ GMSUN = 1.32712497e20
 AU=1.49597892e11
 incl = 90.0
 sini = np.sin(PI*(incl/180.0))
- 
 G  = 6.67384e-11 
 
 
@@ -49,7 +47,6 @@ G  = 6.67384e-11
 mpl.rcParams['axes.linewidth'] = 2.0 #set the value globally
 mpl.rcParams['xtick.major.pad']='1'
 mpl.rcParams['ytick.major.pad']='2'
-
 
 # set tick width
 mpl.rcParams['xtick.major.size'] = 8
@@ -62,13 +59,11 @@ mpl.rcParams['ytick.major.width'] = 2
 mpl.rcParams['ytick.minor.size'] = 5
 mpl.rcParams['ytick.minor.width'] = 2
 
-
 rc('text',usetex=True)
 font = {'family' : 'normal','weight' : 'black','size': 22,'serif':['Helvetica']}
 rc('font', **font)
 
 ########################## run the wrapper #####################################
-
 
 
 class FunctionWrapper(object):
@@ -117,8 +112,6 @@ def run_command_with_timeout(args, secs):
     #return proc, flag , text.decode('utf-8')
     return text.decode('utf-8'),flag
     
-    
-
 
 ################  concentrate parameter in arrays ################# 
 def concentrate_par(par,flag,bounds,el_str):
@@ -137,9 +130,6 @@ def concentrate_par(par,flag,bounds,el_str):
 
     return p,f,b,e 
 
-
- 
- 
  
 ################################ wrapper #######################################   
 
@@ -489,7 +479,6 @@ lim_pl1 = [[0.0, 1.0],[0.0, 10.0],[0.0, 0.20],[0, 360.0],[0, 360.0],[3.0, 177.0]
 lim_pl2 = [[0.0, 1.0],[0.0, 10.0],[0.0, 0.20],[0, 360.0],[0, 360.0],[3.0, 177.0],[0.0, 359.9]] # planet 2
  
 
-
 de = [0, 0 ]
 use_de = [0,0]
 lim_de = [[0,200],[0,200]]
@@ -575,18 +564,7 @@ def lnprior(p):
         ######## if something is away from the borders - reject #####
         if p[j] <= b[j,0] or p[j] >= b[j,1]:
             return -np.inf
-        ######## normal distribution for the eccentricity with
-        ######## scipy.stats.norm(mu,std_dev).pdf(e[j]) 
-        ######## flat prior for the rest! 
-        
-       # if j == 3:
-            #prob_ecc1 =  np.log(float(scipy.stats.norm(0.001,0.02).pdf(p[j])) )
-       #     prob_ecc1 = np.log(np.exp(-0.5 * (p[j]/SIG_E)**2.0))
-
-       # if j == 8:
-
-        #    prob_ecc2 = np.log(np.exp(-0.5 * (p[j]/SIG_E)**2.0))
-
+ 
     return 0.0 # + prob_ecc1 + prob_ecc2
   
 
@@ -631,12 +609,9 @@ def trans_loguni(p,a,b):
 partial_func = FunctionWrapper(migration, (par,f, npl) )
 
 
-
-
-print(p)
-#priors = [pr_nr,jeff_nr]
-
-ndim, nwalkers = len(p), len(p)*5
+#print(p)
+ 
+ndim, nwalkers = len(p), len(p)*50
  
 print_progress = True
 Dynamic_nest = True
@@ -647,8 +622,8 @@ ns_bound = 'multi'
 ns_pfrac = 1.0
 ns_use_stop = True
 
-ns_maxiter = 100000
-ns_maxcall = 500
+ns_maxiter = None # 100000
+ns_maxcall = None # 100000
 
 nest_weighted = False
 fileoutput = True
@@ -726,10 +701,6 @@ else:
 
 
 
-# print("--- %s seconds ---" % (time.time() - start_time))
-
-
-
 ln = np.hstack(sampler.results.logl)
 
 
@@ -741,14 +712,10 @@ else:
     samples  =  dill.copy(sampler.results.samples)   
 
 
-# print("--- %s seconds ---" % (time.time() - start_time))  
-
-
 
 
 if (fileoutput):
 # start_time = time.time()   
-# print("Please wait... writing the ascii file")  
 
     outfile = open(str("nest_sampl"), 'w') # file to save samples
     for j in range(len(samples)):
@@ -757,7 +724,7 @@ if (fileoutput):
             outfile.write("%s  " %(samples[j,z]))
         outfile.write("\n")
     outfile.close()        
-# print("--- Done for ---")           
+
 #   print("--- %s seconds ---" % (time.time() - start_time))  
  
 #start_time = time.time()    
@@ -815,22 +782,7 @@ for i in range(len(best_fit_par)):
     best_fit_par_2.append(np.median(samples[:,i]))
 
 
-#fig = corner.corner(samples, labels=e, truths=best_fit_par, dpi = 300 )
-#fig.savefig("samples_%s.png"%mod)
-
-
-
-
  
-#range=ranged, 
-#fig = corner.corner(samples,bins=25, color="k", reverse=True, upper= True, labels=e, quantiles=[0.1585, 0.8415],levels=(0.6827, 0.9545,0.9973), smooth=1.0, smooth1d=1.0, plot_contours= True, show_titles=True, truths=best_fit_par, dpi = 300, pad=15, labelpad = 50 ,truth_color ='r', title_kwargs={"fontsize": 12}, scale_hist=True,  no_fill_contours=True, plot_datapoints=True)
-
-#fig = corner.corner(samples,bins=25, color="k", reverse=False, upper= True, labels=e, 
-#                    quantiles=[0.1585, 0.8415],levels=(0.6827, 0.9545,0.9973), smooth=1.0, 
-#                    smooth1d=1.0, plot_contours= True, show_titles=True, truths=best_fit_par_2, dpi = 300, 
-#                    pad=15, labelpad = 0 ,truth_color ='r', title_kwargs={"fontsize": 12}, scale_hist=True,  
-#                    no_fill_contours=True, plot_datapoints=True)
-
 fig = corner.corner(
     samples,
     bins=cornerplot_opt["bins"],
