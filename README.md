@@ -25,11 +25,17 @@ You'll also need an installed Fortran compiler (`gfortran`) for the migration in
 
 - `compute_mig_nest.py`: Main script for running migration nested sampling  
 - `dynesty_2_0/`: Forked Dynesty sampler code  
+- `corner_ES/`: Forked cornerplot code  
 - `swift/`: Compiled Fortran integrator libraries (e.g. `libswift.a`)  
-- `examples/`: Sample configurations and run scripts  
 - `README.md`: This documentation
 
 ## Usage
+
+Make sure the swift binaries are compiled
+
+```bash
+bash install_swift.sh
+```
 
 Run the main sampling script:
 
@@ -37,7 +43,7 @@ Run the main sampling script:
 python3 compute_mig_nest.py
 ```
 
-By default, this will execute migration models with nested sampling. You can configure:
+By default, this will execute migration models with nested sampling. Inside compute_mig_nest.py you can configure:
 
 - Input parameters via command-line flags or configuration files  
 - Sampling options (number of live points, stopping criteria)  

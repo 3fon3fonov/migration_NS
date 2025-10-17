@@ -14,7 +14,7 @@ from subprocess import PIPE, Popen
 #import scipy.optimize as op
 #import emcee
 #import signal
-import corner
+import corner_ES as corner
 #import dynesty
 import dill
 dill.settings['fmode']
@@ -231,7 +231,7 @@ unknown
 
     for j in range(npl):
 
-        os.system('''../follow_symba2 << EOF
+        os.system('''../follow_symba2 << EOF > /dev/null 2>&1
 param.in
 %s
 %s
@@ -640,15 +640,15 @@ ndim, nwalkers = len(p), len(p)*5
  
 print_progress = True
 Dynamic_nest = True
-threads = 10
+threads = 8
 dynesty_samp = 'rwalk'
 stop_crit = 0.1
 ns_bound = 'multi'
 ns_pfrac = 1.0
 ns_use_stop = True
 
-ns_maxiter = None
-ns_maxcall = None
+ns_maxiter = 100000
+ns_maxcall = 500
 
 nest_weighted = False
 fileoutput = True
@@ -750,13 +750,13 @@ if (fileoutput):
 # start_time = time.time()   
 # print("Please wait... writing the ascii file")  
 
-        outfile = open(str("nest_sampl"), 'w') # file to save samples
-        for j in range(len(samples)):
-            outfile.write("%s  " %(ln[j]))
-            for z in range(len(pp)):
-                outfile.write("%s  " %(samples[j,z]))
-            outfile.write("\n")
-        outfile.close()        
+    outfile = open(str("nest_sampl"), 'w') # file to save samples
+    for j in range(len(samples)):
+        outfile.write("%s  " %(ln[j]))
+        for z in range(len(p)):
+            outfile.write("%s  " %(samples[j,z]))
+        outfile.write("\n")
+    outfile.close()        
 # print("--- Done for ---")           
 #   print("--- %s seconds ---" % (time.time() - start_time))  
  
@@ -766,23 +766,53 @@ if (fileoutput):
 
 #----------------------------------- labels  ----------------------------------#
  
-
+cornerplot_opt = {'bins': 25,
+  'color': 'k',
+  'reverse': False,
+  'upper': True,
+  'quantiles': 68.3,
+  'levels': (0.6827, 0.9545, 0.9973),
+  'smooth': 1.0,
+  'smooth1d': 1.0,
+  'plot_contours': True,
+  'show_titles': False,
+  'dpi': 300,
+  'pad': 15,
+  'labelpad': 0.09,
+  'truth_color': 'r',
+  'title_kwargs': {'fontsize': 12},
+  'scale_hist': True,
+  'fill_contours': True,
+  'no_fill_contours': False,
+  'plot_datapoints': False,
+  'stab_color': 'r',
+  'stab_threshold': 1.0}
+ 
+ 
 level = (100.0-68.3)/2.0
+#quantiles = None
+#title_quantiles = None    
+level_q = (100.0-cornerplot_opt["quantiles"])/2.0    
 
-print("Best fit par. and their 1 sigma errors")     
+quantiles = [level_q/100.0, 0.5, 1.0-level_q/100.0]
+title_quantiles = [level_q/100.0, 0.5, 1.0-level_q/100.0]  
+
+
+
+best_fit_par_2 = []
+print("Best fit par. and their 1 sigma errors" )	
 for i in range(len(best_fit_par)):
     ci = np.percentile(samples[:,i], [level, 100.0-level])
     print(e[i],'=', best_fit_par[i], "- %s"%(best_fit_par[i]-ci[0]), "+ %s"%(ci[1]  - best_fit_par[i] ))
 
 print("   ")
-print("   ")     
-print("Means and their 1 sigma errors")     
+print("   " 	)
+print("Means and their 1 sigma errors" )	
 for i in range(len(best_fit_par)):
     ci = np.percentile(samples[:,i], [level, 100.0-level])
     print(e[i],'=', np.mean(samples[:,i]), "- %s"%(np.mean(samples[:,i])-ci[0]), "+ %s"%(ci[1]  - np.mean(samples[:,i]) ))
 
-
-
+    best_fit_par_2.append(np.median(samples[:,i]))
 
 
 #fig = corner.corner(samples, labels=e, truths=best_fit_par, dpi = 300 )
@@ -793,9 +823,42 @@ for i in range(len(best_fit_par)):
 
  
 #range=ranged, 
-fig = corner.corner(samples,bins=25, color="k", reverse=True, upper= True, labels=e, quantiles=[0.1585, 0.8415],levels=(0.6827, 0.9545,0.9973), smooth=1.0, smooth1d=1.0, plot_contours= True, show_titles=True, truths=best_fit_par, dpi = 300, pad=15, labelpad = 50 ,truth_color ='r', title_kwargs={"fontsize": 12}, scale_hist=True,  no_fill_contours=True, plot_datapoints=True)
+#fig = corner.corner(samples,bins=25, color="k", reverse=True, upper= True, labels=e, quantiles=[0.1585, 0.8415],levels=(0.6827, 0.9545,0.9973), smooth=1.0, smooth1d=1.0, plot_contours= True, show_titles=True, truths=best_fit_par, dpi = 300, pad=15, labelpad = 50 ,truth_color ='r', title_kwargs={"fontsize": 12}, scale_hist=True,  no_fill_contours=True, plot_datapoints=True)
 
+#fig = corner.corner(samples,bins=25, color="k", reverse=False, upper= True, labels=e, 
+#                    quantiles=[0.1585, 0.8415],levels=(0.6827, 0.9545,0.9973), smooth=1.0, 
+#                    smooth1d=1.0, plot_contours= True, show_titles=True, truths=best_fit_par_2, dpi = 300, 
+#                    pad=15, labelpad = 0 ,truth_color ='r', title_kwargs={"fontsize": 12}, scale_hist=True,  
+#                    no_fill_contours=True, plot_datapoints=True)
 
+fig = corner.corner(
+    samples,
+    bins=cornerplot_opt["bins"],
+    color=cornerplot_opt["color"],
+    reverse=cornerplot_opt["reverse"],
+    upper=cornerplot_opt["upper"],
+    labels=e,
+    quantiles=quantiles,
+    title_quantiles=title_quantiles,
+    levels=(0.6827, 0.9545, 0.9973),
+    smooth=cornerplot_opt["smooth"],
+    smooth1d=cornerplot_opt["smooth1d"],
+    plot_contours=cornerplot_opt["plot_contours"],
+    show_titles=cornerplot_opt["show_titles"],
+    truths=best_fit_par,
+    dpi=cornerplot_opt["dpi"],
+    pad=cornerplot_opt["pad"],
+    labelpad=cornerplot_opt["labelpad"],
+    truth_color=cornerplot_opt["truth_color"],
+    title_kwargs={"fontsize": 12},
+    scale_hist=cornerplot_opt["scale_hist"],
+    no_fill_contours=cornerplot_opt["no_fill_contours"],
+    fill_contours=cornerplot_opt["fill_contours"],
+    plot_datapoints=cornerplot_opt["plot_datapoints"],
+    contour_kwargs={'colors': cornerplot_opt["stab_color"]},
+    hist_kwargs={'color': cornerplot_opt["stab_color"]},
+    data_kwargs={'zorder': 10, 'color': cornerplot_opt["stab_color"]}
+)
 
 
 #fig = corner.corner(samples, labels=el_str, truths=best_fit_par, dpi = 300, pad=15, labelpad = 50 )
@@ -804,7 +867,7 @@ fig.savefig("samples_%s.pdf"%mod)
 
 
 
-os.system("sort samples_%s | uniq > samp_%s &"%(mod,mod))
+os.system("sort nest_sampl | uniq > sorted_nest_sampl &")
 
 print("Done")
 
